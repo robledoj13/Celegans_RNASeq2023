@@ -1,5 +1,5 @@
 # Celegans_RNASeq2023
-**PadillaLabUNT**: [Springer Protocols MiMB protocols]
+**PadillaLabUNT**: RNA Sequencing Experimental Analysis Workflow Using Caenorhabditis elegans [Springer Protocols - MiMB protocols] Pages 115-141
 
 **Book Title:** Transcriptome Data Analysis - Book © 2024
 
