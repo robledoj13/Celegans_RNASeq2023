@@ -10,10 +10,12 @@
 **Copyright Information** The Editor(s) (if applicable) and The Author(s), under exclusive license to Springer Science+Business Media, LLC, part of Springer Nature 2024
 
 **DOI** https://doi.org/10.1007/978-1-0716-3886-6
+
 **eBook ISBN** 978-1-0716-3886-6 
+
 **Published:** 27 July 2024
-**Hardcover ISBN** 978-1-0716-3885-9
-Published: 28 July 2024
+
+**Hardcover ISBN** 978-1-0716-3885-9 Published: 28 July 2024
 
 # RNA-sequencing experimental analysis workflow using Caenorhabditis elegans Pages 115-141
 
