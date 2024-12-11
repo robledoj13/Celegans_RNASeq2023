@@ -24,3 +24,27 @@ Department of Biological Sciences
 1155 Union Circle #305220
 Denton, TX 76203
 JoseRobledo@my.unt.edu
+
+
+
+# File Descriptions
+RNA_Seq_Methods.html - html download file and can be opened on your browser
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
