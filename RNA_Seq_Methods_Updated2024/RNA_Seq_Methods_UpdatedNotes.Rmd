@@ -1,0 +1,298 @@
+---
+title: 'RNA_Seq_Methods_NotesUpdated'
+author: "Jose_Robledo"
+date: "2024"
+output:
+  html_document:
+    theme: darkly
+    toc: true
+    toc_float: true
+    highlight: zenburn
+---
+
+# RNA-Sequencing experimental analysis workflow using *Caenorhabditis elegans*
+
+**<font size="4">Jose Robledo, Saifun Ripa Nahar, Manuel A. Ruiz, Raymond J. Hendricks, David J. Burks, Mary L. Ladage, Taegun Kwon, Rajeev K. Azad, Pamela A. Padilla^1^</font>**
+
+^1^Department of Biological Sciences, University of North Texas, Denton, TX 76203
+
+Key Words: RNA sequencing, Bioinformatic pipeline, Differentially expressed genes, Reproducibility
+
+<font size="4">Corresponding Authors:</font>
+```{r eval=FALSE}
+Corresponding Author:
+Pamela A. Padilla (PI)
+University of North Texas
+Department of Biological Sciences
+1155 Union Circle #305220
+Denton, TX 76203
+(940)565-3614
+pamela.padilla@unt.edu
+
+Jose Robledo (Bioinformatic Graduate Student)
+University of North Texas
+Department of Biological Sciences
+1155 Union Circle #305220
+Denton, TX 76203
+JoseRobledo@my.unt.edu
+```
+
+# Abstract
+
+<font size="4">RNA sequencing is an approach to transcriptomic profiling that enables the detection of differentially expressed genes in response to genetic mutation or experimental treatment, among other uses. Here we describe a method for the use of a customizable, user-friendly bioinformatics pipeline to identify differentially expressed genes in RNA sequencing data obtained from *C. elegans*, with attention to the improvement in reproducibility and accuracy of results. </font>
+
+# 3. Methods
+
+![](MiMB_fig1.png)
+<font size="4">**Fig. 1 Experimental Workflow** </font>
+
+# 4. Notes
+
+<font size="4">
+
+1.	Consistency in animal husbandry methods is important to maintain reproducibility for each biological replicate in an experiment. This will ensure reproducibility of the RNA-seq data and ultimately result in more accurate interpretation of the data. Differences in experimental protocols between sample replicates could have an impact on gene expression, complicating interpretation of RNA-seq results. Always use the same sample collection procedure and track the timing of steps wherever possible. This ensures the results are reproducibly reporting differences that are due to experimental conditions and not subtle changes in the collection protocol. 
+
+2.	Maintain animals in proper culture conditions. Provide sufficient food and space for at least seven generations prior to using the animals for experiments to reduce intergenerational or transgenerational impacts from starvation or crowding [**10**, **11**]. 
+
+3.	Measuring the optical density of *E. coli* OP50 prior to seeding NGM plates ensures the animals are feeding on the same amount of bacteria; differences in OD can impact metabolic rate [**12**]. 
+
+4.	Determine the egg-laying rate of animals of different genotypes and treatment groups before the experiment. Preliminary experiments establishing the egg-laying rate can help ensure enough animals can be collected for RNA-sequencing.
+
+5.	The 1–2-hour egg-lay method is used to obtain a synchronized population. Hypochlorite treatment is an alternative method to synchronize a population in which adult animals are dissolved with hypochlorite solution and eggs are collected and hatched overnight in M9 solution. Animals arrest in the L1 stage when hatched in the absence of food and resume development in the presence of food. However, this method to synchronize a population should be avoided if possible, to minimize stress responses due to starvation or reactive oxygen species induction by hypochlorite [**13**].
+
+6.	Day 1-2 adult animals are used for the egg lay method to synchronize animals. Older animals may retain embryos longer in the uterus prior to laying them, resulting in a more asynchronous population. 
+
+7.	Carefully control the number of animals that are on each plate to avoid stress responses induced by crowding.
+
+8.	Consider the total number of animals that are collected for RNA extraction and isolation. A smaller population will have a different yield on the amount of RNA that is collected and sequenced compared to a larger population. Using a larger number of animals per sample will facilitate higher genome coverage and the detection of genes with low expression. However, certain mutations can have low egg-laying rates which can pose a challenge to collecting sufficient animals for RNA extraction and isolation. 
+
+9.	A mutation may have an impact on developmental progression and therefore care should be taken to understand developmental timing when compared to other genotypes to ensure animals can be collected at the same time. 
+
+10.	 Developmental progression is monitored by keeping track of the hours post-egg lay and germline morphology. For example, the mid-L4 stage is identified by the location of the distal tip using a compound microscope [**14**]. It is vital to perform baseline experiments to determine the anticipated time for animals to grow from embryo to the desired developmental stage for RNA collection. This is to minimize the number of times the animals must be removed from the incubator to monitor developmental progression, which could result in transcriptional changes unrelated to the experimental conditions [**15**]. 
+
+11.	 Keep track of the time it takes to collect the animals starting with the plate rinse, in between washes, and through snap freezing the Eppendorf tube. The time it takes to collect the animals should be consistent across all samples. This is to prevent variation resulting from subtle protocol changes, which could impact gene expression and the interpretation of the RNA-seq results. 
+
+12.	Keep track of timing during the extraction protocol and keep consistency across all samples to ensure reproducibility of the experiment. Wear gloves and use RNAase free pipette tipes and tubes. To become familiar with the RNA extraction and isolation protocol, it is helpful to practice going through the protocol multiple times before the actual experiment.
+
+13.	 We found that the addition of a 65°C incubation step, additional homogenization time and additional membrane drying time resulted in increased RNA yield. These steps are noted in the protocol described here, which differs slightly from the protocol given by the manufacturer. To become familiar with the RNA extraction and isolation protocol, it is helpful to practice going through the protocol multiple times before the actual experiment.
+
+14.	 Keep samples in crushed ice to avoid RNA degradation.
+
+15.	 The RNA extraction and isolation protocol can be performed at room temperature. However, when working with more than one sample keep samples in crushed ice. 
+
+16.	 The centrifugation step is done at room temperature but can be performed at 4°C if RNA degradation occurs. 
+
+17.	 Ensure that the Eppendorf tube and the column are closed to prevent spilling of sample. During heat bath use, ensure clips are locked or use screw cap tubes to prevent sample from spilling or evaporation.
+
+18.	 Prior to sending samples to the genomics center, ensure degradation of RNA is not occurring in any samples. There are multiple ways to detect this degradation. For practice samples use the bleach protocol and/or a nanodrop spectrophotometer. Final degradation check before sequencing is completed using a Qubit. This will ensure high quality RNA is sequenced.  
+
+19.	RNA-sequencing performed by University of North Texas Genomics Center using an Illumina Sequencer.
+
+20.	Determine sequencing method in collaboration with the genomics center to ensure mRNA targets are sequenced properly. This method may change depending on the biological question. 
+
+21.	Determine library choice for sequencing method to ensure mRNA sequencing method answers biological question.
+
+22.	Programs invoked from shell or within R (through R-studio). Source code and additional text files provided at [https://github.com/robledoj13/Celegans_RNASeq2023]. The programs used in this pipeline are publicly available, open-source and typically available for modern Linux distributions and MacOS. This pipeline does not assume that the end-user has any programming experience. While the R-language has many built-in statistical methods and analysis options, we will be using a collection of additional publicly available libraries for R to handle some of our downstream analysis. Review additional conceptual program considerations to ensure computer system is built for your analysis [https://biocorecrg.github.io/RNAseq_course_2019/] [**16,17**].
+
+23.	 Please refer to the documentation manuals for each program used in this pipeline. Depending on the data being analyzed, there may be options and configurations better suited to each use-case-scenario. While many aspects of this pipeline use the default parameters for the programs used, understanding the assumptions of each program’s default parameters and configurations is an invaluable step towards optimizing your data workflow. Troubleshooting issues can be solved by reading through the documentation manuals for each program. The following online communities can also help if questions arise:
+
+- a.	Github.com
+- b.	Biostars.org
+- c.	Support.bioconductor.org
+- d.	R-bloggers.com
+
+24.	Prior knowledge of using a Linux shell environment, such as bash, as well as knowing some R programing syntax is helpful for this analysis. Review common syntax used to select directories, programs, and edit text files.
+
+25.	Use simple naming conventions for all files and folders to reduce typing errors when running code. Avoid spaces to simplify navigation through the command line interface. Organize the bioinformatic analysis files by using multiple folders and directories if needed. Keep thorough notes for troubleshooting errors.
+
+26.	Ensure that any compressed files are decompressed before program access. G-zip format is popular in the field of bioinformatics, and files can be compressed and decompressed with the gzip and gunzip commands, respectively.
+
+27.	In all programs, the thread option is adjusted depending on computer specifications.
+
+28.	To ease installation of programs, we recommend using a universal package manager such as Conda. Bioconda is a repository specifically focused on biomedical software and should be able to provide all of the packages that we will be using in this guide.
+
+29.	In some cases, there may be more than one package or version available for programs in Bioconda.  We recommend installing the most up-to-date, compatible version for the system being used.
+
+30.	In our test data, each sample produces 8 sequencing files (.fastq extension). Each file includes sample name, lane number (001, 002, 003, 004), and strandedness (plus (R1) and minus (R2)) though this format is ultimately determined by the source of the sequencing data.
+
+31.	Use the *cat* command in Linux to reduce the number of input files for our downstream steps; This is also a good opportunity to rename files to include pertinent information about the samples (e.g. genotype, treatment) to keep things organized.
+
+32.	To gain experience in interpretation of Quality Control Reports users should become familiar with examples of high- and low-quality data. The online manual for FASTQC includes many examples of both good and bad quality sequencing data [https://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/].
+
+33.	The FASTP package will perform the adapter trimming step and quality control. FASTP will generate new FASTQ files provided into a new folder. Review Quality reports and ensure high quality data for analysis.  We will be using the default parameters, but please note that custom adapters or the need for less/more stringent trimming can be invoked as needed.
+
+34.	Use a FASTA file and an annotation file from the same database. Ensembl and Wormbase sometimes have different formats for files. Individual FASTA files separated by chromosome location can be used to lower system requirements, but more processing of files is required. Files that have the whole genome and gtf annotation files are recommended if the system has enough resources to do so.
+
+35.	Adjust for the small genome of *C. elegans* and RAM consumption according to computer system considerations in **note 34**.
+
+36.	Ensure that the output FASTQ files from FASTP are used for alignment. BAM files are an alignment output format that can be used for additional exploratory analysis such as through the Integrative Genomics Viewer (IGV), or used as input for variant-calling, differential expression, etc. The GeneCounts option is a STAR-specific parameter that exports a text file of raw gene counts as {SAMPLE_NAME}.ReadsPerGene.out.tab.
+
+37.	Unmapped reads can be analyzed with tools such as BLAST to determine their source. The alignment/mapping step can be performed with a genome and transcript-annotation file, or with a transcriptome index. For STAR, we first build an index from the genome with an annotated transcript file, but there are many other alignment tools that may use a different approach.
+
+38.	Library strandedness should be provided by the genomics center and bioinformatic validation performed using IGV, Salmon, and Count methods previously described in Subheading **3.4.6**. This crucial step will help the user explore each sample file and help understand RNA-seq method more in depth. The exploration of each sample in this step can help Bionformatics/Biologists insight about the experiment.
+
+39.	When indexing BAM coordinated files, both .bam and .bam.bai files need to be in the same folder for IGV.
+
+40.	Indexing genome using Salmon to automatically determine library method.
+
+41.	If necessary, Salmon can be run in mapping based mode to automatically determine library method. The validateMappings option will automatically detect the most likely library type.
+
+42.	Another option is to count the number of reads using the STAR gene count files to determine library method.  If the library is stranded, this should be fairly obvious to decipher based on which columns have significant counts across the transcriptome.
+
+43.	Extract the appropriate columns using STAR documentation manual. Column 1 includes gene list while columns 2-4 contain gene counts corresponding to library strandedness. 
+
+44.	Further process the STAR gene count files to extract the appropriate columns. Ensure in multiple ways that the appropriate columns are extracted for the experiment. The goal is to have a text file with gene names and raw counts. 
+
+45.	The sample_description.txt file has a column for each raw count file and other columns used to describe each sample such as genotype, treatment, trial number, etc. Each column is separated by a space for ease of import into R. Notice that some of the columns will be used for the experimental design to identify DEGs. Consider the comparisons required by using the different columns for the sample_description.txt file. Multiple questions can be addressed by assessing the different variables in samples collected. 
+
+46.	The wormgenes.txt file includes WormbaseIDs commonly used for genes on wormbase.org. Wormbase also has additional files that can be used to describe gene families (e.g. functional gene descriptions). The goal is to extract only two columns from the annotation file which includes gene names and WormbaseIDs. Other commands can also be used to get the same result. 
+
+47.	Wormbase.org provides additional *C. elegans* gene list files to further describe Wormbase genes.
+
+48.	There are many more library packages available for further classification of genes that can help in understanding significant DEGs. The packages used in here are an example of common analyses to understand significant DEGs.
+
+49.	We can use the built-in read.table function of R to import simple text files as a data table. Ensure each column is separated by a similar character (e.g. space, tab, comma, semicolon, etc.), and adjust the separator parameter appropriately.
+
+50.	Validate the same number of genes are in each file using the nrow function to ensure each file imported correctly.
+
+51.	Edit column names accordingly to ensure each file is formatted correctly.
+
+52.	Export gene descriptions using the write_xlsx function. Ensure all columns are transferred correctly.
+
+53.	Create a DESeq2 data object if samples differ by genotype. Additional variables can be included in the experimental design by following DESeq2 documentation directions.
+
+54.	Additional biological questions can be addressed from the different samples examined. A column can be organized to include both genotype and treatment differences or to make different comparisons. Experiments should be designed carefully to prepare the sample_description file.
+
+55.	A filtering step will help increase the statistical power of the DEG analysis.
+
+56.	Model DESeq2 to the experiment to identify significant DEGs. 
+
+57.	Normalize counts using the log2 function. +1 will result in no errors for any zero present in the data.
+
+58.	Adding WormbaseIDs to the normalized count data frame.
+
+59.	Add average normalized counts to DESeq2 model object (stat1). The numbers can be changed to represent the desired columns.
+
+60.	Ensure the correct columns are selected for each sample. Validate using base R functions. The head() function will preview the top 6 lines of the data frame.
+
+61.	Calculate mean norm counts to an average normalized counts object. Ensure all mean counts are calculated correctly.
+
+62.	Export file count files. Ensure all columns are transferred correctly.
+
+63.	Transformation and sample distance matrix calculations are used to create a heatmap and Principal Component Analysis (PCA). This process includes calculations used to produce log2 scale data already normalized by DESeq2 according to library size.
+
+64.	Sample distance heatmap will help visually show the differences between samples. Samples clustering together ensures samples are reproducible, and sample-groups spread apart suggests that the experimental design resulted in unique expression patterns.
+
+65.	PCA plot and sample distance heatmap are techniques used for reducing the dimensionality of large data sets. This process helps to interpret the variability of the samples of an experiment.
+
+66.	PCA Plot will help to visually show the differences between samples. 
+
+67.	Set the intgroup grouping column variable for the samples (e.g. genotype, treatment, trial number, etc.). Grouping columns is one that was created from sample_description data frame **step 3** in **Subheading 3.5**. 
+
+68.	DEG analysis (treatment 2 = sample2 variable in (Subheading **3.5**, **steps 19-20**); review syntax accordingly). Using 'ashr' for LFC shrinkage. If used in published research, please cite: Stephens, M. (2016) False discovery rates: a new deal. Biostatistics, 18:2.https://doi.org/10.1093/biostatistics/kxw04
+
+69.	Be careful with the order when interpreting significantly DEGs. For example, gene A is significantly different in treatment 2 when compared to treatment 1. Therefore, the order for this example will be (sample1_treatment2", "sample1_treatment1")
+
+70.	Add average wormgene_descriptions to DEG file (Subheading **3.5**, **steps 2-5**). Ensure the right columns are transferred using BaseR functions.
+
+71.	Add average norm counts of sample (Subheading **3.5**, **steps 19-20**). Ensure the right columns are transferred using BaseR functions.
+
+72.	Reorder column names for interpretation of significant differences for each gene as a row. Ensure the right columns are transferred using BaseR functions.
+
+73.	Write differential expression analysis results to a text file and an Excel file. Ensure the right columns are transferred to both files. Sometimes gene names may be interpreted as dates by Excel.
+
+74.	Cross platform Bioinformatic Analysis Considerations 
+Initial setup of computer hardware and software to perform bioinformatic analyses on RNA-sequencing data can be challenging due to the software complexity, version incompatibilities, and software dependencies involved. Having a thorough understanding of the software installed and the system that it is installed on can avoid potential problems for downstream analysis. Executing a bioinformatic pipeline requires multiple software packages to be installed that may vary due to the computer system’s hardware and software specifications. Below are alternative considerations to keep in mind when using different computer systems: 
+
+74.1	MacOS 
+Apple manufactures computers with 64-bit Intel processors (AMD64 Architecture), and Apple-designed Apple Silicon processors (Apple ARM64 Architecture). The Anaconda Platform and R/R-studio supports Apple Silicon systems. R / RStudio applications are also supported although some packages may run via the Rosetta2 AMD64 emulation layer on MacOS. If packages are not available on ARM64, it may be advisable to install the Anaconda AMD64 installer.
+
+74.2	Linux (Ubuntu)
+Linux offers additional flexibility and functionality for running bioinformatic analyses. This includes the ability to use larger amounts of memory, the flexibility to use a variety of different software versions, and greater customizability while retaining software. The Anaconda platform is compatible with Ubuntu Linux. Official R packages are available via the CRAN repository website [https://cran.r-project.org/bin/linux/ubuntu/fullREADME.html] and R / RStudio packages are available via the RStudio website [https://posit.co/download/rstudio-desktop/]
+
+74.3	Microsoft Windows 10/11
+Running bioinformatic analyses is also possible on Windows 10/11 via Windows Subsystem for Linux (WSL). Instructions to install WSL [https://learn.microsoft.com/en-us/windows/wsl/install] and Ubuntu [] releases are both available from Microsoft. WSL allows for running a complete Ubuntu Linux system from within Windows at near-native speeds and is an option if not using MacOS/Linux systems.
+
+74.4	Hardware Considerations 
+Hardware requirements may differ depending on programs used for RNA-seq analysis. For the RNA-seq pipeline reported here, the STAR aligner was used to index the *C. elegans* genome and the alignment step. In using the *C. elegans* genome,16 gigabytes of RAM, 100 gigabytes of storage, and a modern 8-core processor are sufficient for most bioinformatic analysis. The use of external hard drives may also help in storing large files.
+
+75.	 Reproducibility of Bioinformatic Pipelines
+75.1	Containerization
+Biologists may be interested in reproducing bioinformatic pipelines using similar system requirements as referenced in published work. An approach to configure software performed by a published bioinformatic pipeline is to use a containerization tool such as Docker. Docker allows bioinformatic pipeline programs to run on different computers by creating a “container” that encapsulates all the software requirements needed for a bioinformatic pipeline. Containerization of bioinformatic pipelines using Docker or Singularity can be performed using BioContainers [https://biocontainers-edu.readthedocs.io/en/master/what_is_biocontainers.html] providing several prebuilt bioinformatics packages. These tools allow one to package all the necessary software and dependencies into a self-contained environment that can run across different systems either natively such as on MacOS or on Windows Subsystem for Linux. This ensures that the entire analysis can be reproduced the same way each time it is run, regardless of the operating system or hardware used. However, containerization software can be complex and cumbersome to set up for most workflows. Although the use of containerization software is practical to run to architect largescale workflows, it is generally more practical to use a package manager to run command line bioinformatic software using desired program version installations. 
+
+75.2	Package Management and Environment Specifications
+Another approach is to use package management software such as the Anaconda Platform [https://www.anaconda.com] with the Bioconda repository [https://bioconda.github.io] or Mamba [https://github.com/mamba-org/mamba] package manager which is a reimplementation of the Anaconda Platform package manager in C++. Package managers such as Anaconda Platform can automatically manage dependencies and ensure that the required software is installed in a consistent and reproducible way. When defined versions of software are intended to be used as an alternative to containerization, software versions can be specified in a YAML markup file (environment.yml) to share an Anaconda Platform environment, or a requierments.txt file to share a Python Virtual Environment. These files can be shared to reproduce the environment with the specified software packages and versions in the files. 
+
+75.3	Workflow Management Software
+If reproducibility is desired in more complex workflows, workflow management software including Nextflow and Snakemake can be used. This software is designed to capture the entire workflow of data-driven computational pipelines and define the bioinformatic pipeline in a series of steps or processes that are executed in a specific order. 
+
+75.4	Pipeline Software Design and Documentation Considerations 
+To ensure reproducibility, it is important to provide documentation of the entire analysis pipeline, including all software packages and versions of software packages used. Reproducible bioinformatic scripting can be completed using tools such as Jupyter notebooks, which allow the documentation of analysis and code in a reproducible and interactive way. Overall, setting up a bioinformatics platform for sequence analysis can be challenging, but with the right tools and approaches, it's possible to ensure reproducibility and ease of setup. 
+
+</font>
+
+# 4.1 Updated Notes
+
+<font size="4">
+
+1.	MultiQC - added program to analysis to generate a Quality Control Report of all files.
+
+2. Ensure you run MultiQC on the directory where each html file from fastqc is located. MultiQC also requires .json files from fastp to generate report. Additional documentation can be found in https://docs.seqera.io/multiqc/getting_started/running_multiqc
+
+3. RefSeq most updated genome assembly was used in this updated methods tutorial. Ensembl currently has an older version of the *C. elegans* genome assembly. Always use the most up to date genome assembly for the analysis.
+
+4. Removed the unmapped reads option in case you are not interested in this data. Also added the TranscriptomeSAM option to generate transcriptome coordinate counts that can be used in Salmon. This could be an optional alternative in case you know samples have genomic contamination.
+
+5. Alternative method in indexing Bam.Coordinate files can be used in IGV in the igvtools option.
+
+6. geneInfo.tab file is located in your RefSeq genome index folder. Remove the total number of genes at the top of text file. There is a total of 46928 aligned genes using RefSeq genome.
+
+7. For *C. elegans* researchers, WormBaseIDs are more user friendly method of annotating genes. RefSeq gene annotation is "CELE_transcriptname" and not as user friendly with wormbase.org database. This approach in combining gene names from 2 different databases is useful if using additional gene annotation packages from R (e.g. org.Ce.eg.db, AnnotationDbi, TxDb.Celegans.UCSC.ce11.refGene, GenomicRanges, Organism.dplyr). This is of interest to users when other packages require a different gene id input (e.g. entrezIDs, ensembl, uniprot, genome coordinates, etc.). Please be advised that not every annotation database has all wormgenes annotated. Additionally, wormbase.org provides all worm genes that may not have been available for the alignment step in **Subheading 3.4.5**.
+
+8. User can use the sample_description file to separate groups for the DESeq2 analysis.
+
+</font>
+
+# References
+
+<font size="4">
+
+1.	Stark, R., M. Grzelak, and J. Hadfield, RNA sequencing: the teenage years. Nat Rev Genet, 2019. 20(11): p. 631-656.
+
+2.	Brenner, S., The genetics of Caenorhabditis elegans. Genetics, 1974. 77(1): p. 71-94.
+
+3.	Davis, P., et al., WormBase in 2022-data, processes, and tools for analyzing Caenorhabditis elegans. Genetics, 2022. 220(4).
+
+4.	Aranda, P.S., D.M. LaJoie, and C.L. Jorcyk, Bleach gel: a simple agarose gel for analyzing RNA quality. Electrophoresis, 2012. 33(2): p. 366-9.
+
+5.	Chen, S., et al., fastp: an ultra-fast all-in-one FASTQ preprocessor. Bioinformatics, 2018. 34(17): p. i884-i890.
+
+6.	Dobin, A., et al., STAR: ultrafast universal RNA-seq aligner. Bioinformatics, 2013. 29(1): p. 15-21.
+
+7.	Li, H., et al., The Sequence Alignment/Map format and SAMtools. Bioinformatics, 2009. 25(16): p. 2078-9.
+
+8.	Danecek, P., et al., Twelve years of SAMtools and BCFtools. Gigascience, 2021. 10(2).
+
+9.	Chen, Y., A.T. Lun, and G.K. Smyth, From reads to genes to pathways: differential expression analysis of RNA-Seq experiments using Rsubread and the edgeR quasi-likelihood pipeline. F1000Res, 2016. 5: p. 1438.
+
+10.	Klosin, A., et al., Transgenerational transmission of environmental information in C. elegans. Science, 2017. 356(6335): p. 320-323.
+
+11.	Miersch, C. and F. Doring, Paternal dietary restriction affects progeny fat content in Caenorhabditis elegans. IUBMB Life, 2012. 64(7): p. 644-8.
+
+12.	Preez, G.D., et al., Oxygen consumption rate of Caenorhabditis elegans as a high-throughput endpoint of toxicity testing using the Seahorse XF(e)96 Extracellular Flux Analyzer. Sci Rep, 2020. 10(1): p. 4239.
+
+13.	Whiteman, M., et al., Do mitochondriotropic antioxidants prevent chlorinative stress-induced mitochondrial and cellular injury? Antioxid Redox Signal, 2008. 10(3): p. 641-50.
+
+14.	Antebi, A., et al., Cell and Growth Cone Migrations, in C. elegans II, D.L. Riddle, et al., Editors. 1997: Cold Spring Harbor (NY).
+
+15.	Melnick, M., et al., Heat shock in C. elegans induces downstream of gene transcription and accumulation of double-stranded RNA. PLoS One, 2019. 14(4): p. e0206715.
+
+16.	Gimenez, G., et al., Strategy for RNA-Seq Experimental Design and Data Analysis. Methods Mol Biol, 2023. 2588: p. 249-278.
+
+17.	Chatterjee, A., et al., A Guide for Designing and Analyzing RNA-Seq Data. Methods Mol Biol, 2018. 1783: p. 35-80.
+
+</font>
+
+
+
+# End
