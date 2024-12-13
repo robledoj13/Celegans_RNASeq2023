@@ -1,0 +1,952 @@
+---
+title: "Tutorial of RNA Seq Methods"
+date: "12/11/2024"
+output:
+  html_document:
+    theme: darkly
+    toc: yes
+    toc_float: yes
+    highlight: zenburn
+---
+
+# Robledo et al. 2024 RNASeq Pipeline
+
+FastQC v0.12.1
+MultiQC v1.19
+fastp 0.23.4
+STAR v2.7.10b
+Salmon v1.10.3
+DESeq2 v1.44.0 via R 4.4.2 -- "Pile of Leaves"
+
+Genome: Refseq WS294 (10/2024)
+
+Annotation: Refseq WS294 (10/2024)
+
+Descriptions: Wormbase WS294 PRJNA13758 Functional Annotations
+
+```{bash eval=FALSE}
+# Anaconda used to download, install, or update all programs : https://www.anaconda.com 
+fastqc --version #v0.12.1
+multiqc --help #v1.19
+fastp --version #fastp v0.23.4
+star --version #star v2.7.10b
+salmon -v #1.10.3
+```
+
+# Published RNA Seq Data
+
+```{bash eval=FALSE}
+############# Samples
+Published RNASeq Data: 
+Ladage et al. 2016 G3 - L16 - PMID: 27507791 - https://doi.org/10.1534%2Fg3.116.031583
+Garcia et al. 2015 Genetics - G15 - PMID: 25762526 - https://doi.org/10.1534/genetics.115.174631
+
+############# Ladage et al. 2016 G3 - L16 - PMID: 27507791 - https://doi.org/10.1534%2Fg3.116.031583
+Glucose or Altered Ceramide Biosynthesis Mediate Oxygen Deprivation Sensitivity Through Novel Pathways Revealed by Transcriptome Analysis in Caenorhabditis elegans
+Ladage et al. 2016 G3 - L16 - PMID: 27507791 - https://doi.org/10.1534%2Fg3.116.031583
+Methods: D1 Adults 0.05% Glucose
+Young nongravid adults were collected for mRNA isolation as previously described (Garcia et al. 2015). RNA sampling was done in three biological replicates for hyl-2(tm2031) animals fed either OP50 or glucose-supplemented OP50 diet (0.5% glucose). Briefly, gravid adults were allowed to lay eggs on several NGM plates for 2–4 hr, adults were then washed off with M9, and the embryos, which remained on the plate, were allowed to hatch. L1 animals were collected and placed on respective media plates (OP50 only or OP50 supplemented with 0.5% glucose). Approximately 10,000 animals (per trial) were grown to young adulthood, past the L4 molt but prior to egg production, before collection by gravity separation with M9 in 15 ml conical tubes. The animals were washed 3 times with M9 and allowed to settle by gravity separation to remove bacteria. Excess M9 was removed, and 4 vol of Trizol per vol of animals were added. The tubes were immediately frozen in liquid nitrogen, thawed and briefly vortexed; this step was repeated and then followed by a 5 min incubation at room temperature. To each tube, 0.2 ml of chloroform per 1 ml of Trizol was added, mixed gently for 15 sec, incubated at room temperature for 2–3 min, and then centrifuged at 12,000 × g for 15 min at 4°. The colorless upper phase was transferred to an RNase free tube. RNA was then purified using an Ambion PureLink RNA Mini Kit (Cat# 12183018A). Following RNA purification, the RNA was treated with DNase I (Life Technologies, Cat# 12185010), quantified using a NanoDrop Spectrophotometer and stored at −80°. RNA was isolated from three independent experiments. Next-generation RNA sequencing (RNA-Seq) experiments and analysis was done as previously described (Garcia et al. 2015). The RNA-Seq was done at the University of Texas Southwestern Genomics Core facility, which resulted in generation of approximately 30.86 M, 35.42 M, and 30.78 M single-end reads of length 50 bp for the three hyl-2(tm2031) OP50-fed replicates (mean 32.35 million reads), and 30.31 M, 29.79 M, and 31.56 M single-end reads of length 50 bp for the three hyl-2(tm2031) glucose-fed replicates (mean 30.56 million reads). These deep sequencing raw transcriptome data were then used for a comprehensive quantitative analysis of differential gene regulation in hyl-2(tm2031) and glucose-fed C. elegans. The publicly available Tuxedo suite of programs was used for RNA-Seq analysis, which includes the software Bowtie (Langmead et al. 2009), Tophat (Trapnell et al. 2009), and Cufflinks (Trapnell et al. 2010). The C. elegans genome build WS195 at NCBI was used as the reference genome for obtaining the read alignment using Bowtie and the splice junctions using Tophat. Cufflinks was used to identify the genes in glucose-fed C. elegans with significant alteration in their expressions compared to wild-type C. elegans. Cufflinks performs a statistical significance test for differential expression of each transcript based on a negative binomial model estimated from the data (Trapnell et al. 2010). The transcripts passing the significance test [False discovery rate (FDR) adjusted P-value to be < 0.05, Trapnell et al. 2010] were examined further for their abundance fold change between the conditions. Custom programs were developed for further parsing of this data and classifying the differentially expressed genes based on functional annotation at Wormbase database (http://www.wormbase.org/).
+
+Samples - SampleNames - SRA Accesstion Run# - Accession#
+L16_Control1 - L16_OP501 - SRR3733892.fastq - PRJNA327375; GEO: GSE83887
+L16_Control2 - L16_OP502 - SRR3733893.fastq - PRJNA327375; GEO: GSE83887
+L16_Control3 - L16_OP503 - SRR3733894.fastq - PRJNA327375; GEO: GSE83887
+L16_Glucose1 - SRR3733895.fastq - PRJNA327375; GEO: GSE83887
+L16_Glucose2 - SRR3733896.fastq - PRJNA327375; GEO: GSE83887
+L16_Glucose3 - SRR3733897.fastq - PRJNA327375; GEO: GSE83887
+
+# access to published RNA Seq data
+NCBI - https://www.ncbi.nlm.nih.gov - Project: https://www.ncbi.nlm.nih.gov/bioproject/PRJNA327375
+
+#############
+```
+
+# Download Sample fastq files
+
+Files for this analysis have been extracted from NCBI (SRA) Sequence Read Archive for files performed in the following references using the SRA toolkit
+```{bash eval=FALSE}
+#############
+# individual fastq files can be downloaded using the SRA toolkit
+https://hpc.nih.gov/apps/sratoolkit.html
+
+# SRA toolkit installation
+https://github.com/ncbi/sra-tools/wiki
+
+# SRA toolkit terminal configuration
+wget "download file link" # download
+tar -vxzf sratoolkit.tar.gz # extract
+export PATH=$PATH:$PWD/sratoolkit.3.0.0-mac64/bin #export path to facilitate syntax
+#############
+```
+
+## 1) SRAtoolkit Download SRA files
+folder name: fastq
+```{bash eval=FALSE}
+############# Ladage et al. 2016 G3 - L16 - PMID: 27507791 - https://doi.org/10.1534%2Fg3.116.031583
+vdb-dump --info SRR3733892 SRR3733893 SRR3733894 SRR3733895 SRR3733896 SRR3733897 #check for size of files
+prefetch --max-size u. SRR3733892 SRR3733893 SRR3733894 SRR3733895 SRR3733896 SRR3733897 -p #download SRA files
+fasterq-dump -p SRR3733892 SRR3733893 SRR3733894 SRR3733895 SRR3733896 SRR3733897 -e 4 #convert to fastq files
+```
+
+## 2) fastq files
+folder name: fastq
+```{bash eval=FALSE}
+############# Ladage et al. 2016 G3 - L16 - PMID: 27507791 - https://doi.org/10.1534%2Fg3.116.031583
+File Name - Diet - SRA fastq file
+L16_Control1 - OP501 (Control) - SRR3733892.fastq
+L16_Control2 - OP502 (Control) - SRR3733893.fastq
+L16_Control3 - OP503 (Control) - SRR3733894.fastq
+L16_Glucose1 - Glucose1 - SRR3733895.fastq
+L16_Glucose2 - Glucose2 - SRR3733896.fastq
+L16_Glucose3 - Glucose3 - SRR3733897.fastq
+```
+
+## 3.4	Bioinformatic Pipeline: Linux Command Line (Terminal)
+
+### Part I: Linux Command Line (Terminal)
+
+<font size="4">
+
+**Part 1** of the Bioinformatic pipeline is written for the use of a MacBook Pro using the Linux bash command line (e.g Terminal application). Create a folder where all bioinformatic analysis files are located for part 1 of the analysis (*see* **Note 22-27**). 
+
+</font>
+
+#### 3.4.1 Installing Required Programs
+
+<font size="4">
+
+1.	Use the Anaconda (Conda) repository environment management system to install all free open-source packages for Windows, macOS or Linux. Anaconda (Conda) installation can be downloaded free using the Google Chrome Internet Browser at [https://www.anaconda.com/]. Follow the directions to install the Conda environment on Linux Terminal provided by the User Guide at [https://docs.conda.io/projects/conda/en/latest/user-guide/index.html] (*see* **Note 28**).
+
+2.	Search for the desired program on the Conda page at [https://www.anaconda.com/] or the Anaconda Navigator application. Copy and paste a Conda installer into the Linux terminal to run installation (*see* **Note 29**). 
+
+3.	Install the following packages using a Conda environment:
+
+- a.	FASTQC - https://anaconda.org/bioconda/fastqc 
+- b.	FASTP - https://anaconda.org/bioconda/fastp [**5**]
+- c.	SALMON - https://anaconda.org/bioconda/salmon 
+- d.	STAR - https://anaconda.org/bioconda/star [**6**]
+- e.	SAMTOOLS - https://anaconda.org/bioconda/samtools [**7,8**]
+- **f. MultiQC - https://github.com/MultiQC/MultiQC ** (*see* **Updated Note 1**)
+
+</font>
+
+#### 3.4.2	FASTQ files 
+
+<font size="4">
+
+1.	The RNA Illumina Sequencing system for paired-end reads exports a total of 8 FASTQ files per sample. Plus and minus strands (R1 and R2) were sequenced for each lane (resulting in 4 lanes total) for each sample provided (*see* **Note 30**). To consolidate the FASTQ files for each sample, concatenate (Cat command in Linux) all lanes (001-004) for each strand (R1 and R2). This will result in 2 FASTQ files (R1 and R2) for each sample (*see* **Note 31**). 
+
+</font>
+
+**Updated Code**
+```{bash eval=FALSE}
+
+# sample 1 file
+Sample Linux Code: 
+~% cat /file/location/sample1_L001_R1.fastq /file/location/sample1_L002_R1.fastq /file/location/sample1_L003_R1.fastq /file/location/sample1_L004_R1.fastq > /file/location/sample1_R1.fastq
+
+Sample Linux Code: 
+~% cat /file/location/sample1_L001_R2.fastq /file/location/sample1_L002_R2.fastq /file/location/sample1_L003_R2.fastq /file/location/sample1_L004_R2.fastq > /file/location/sample2_R2.fastq 
+```
+
+#### 3.4.3	Quality Control
+
+<font size="4">
+
+1.	Use the FASTQC package to perform quality control analysis by following the documentation directions at [https://www.bioinformatics.babraham.ac.uk/projects/fastqc/]. Quality control analysis of each sample FASTQ file was completed. Example reports to aid quality report interpretation are provided in the Example Reports section of the FASTQC documentation (*see* **Note 32**). **To generate a quality control report of all files run multiqc package by following the documentation directions [https://github.com/MultiQC/MultiQC]** (*see* **Updated Note 2**)
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# sample 1 file - prefiltering Quality Control
+Sample Linux Code: 
+~% FastQC /file/location/fastq/*.fastq -o /file/location/qc_1 -t 4
+
+############# additional code
+multiqc .
+```
+
+#### 3.4.4	Adapter Trimming
+
+<font size="4">
+
+1.	Perform additional quality control and adapter trimming using the FASTP package following the documentation directions at [https://github.com/OpenGene/fastp#fastp] (*see* **Note 33**). Reports are generated to assess the quality of the data and can be interpreted using the documentation at [https://github.com/OpenGene/fastp#fastp] or by using FASTQC report examples. **To generate a quality control report of all files run multiqc package by following the documentation directions [https://github.com/MultiQC/MultiQC]** (*see* **Updated Note 2**)
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# sample files
+Sample Linux Code:
+# OP50 Control
+~% fastp -w 4 -i /file/location/fastq/SRR3733892.fastq -o /file/location/fastp/L16_OP501.fastq -h /file/location/fastp/L16_N2_OP501.html -j /file/location/fastp/L16_N2_OP501.json
+~% fastp -w 4 -i /file/location/fastq/SRR3733893.fastq -o /file/location/fastp/L16_OP502.fastq -h /file/location/fastp/L16_N2_OP502.html -j /file/location/fastp/L16_N2_OP502.json
+~% fastp -w 4 -i /file/location/fastq/SRR3733894.fastq -o /file/location/fastp/L16_OP503.fastq -h /file/location/fastp/L16_N2_OP503.html -j /file/location/fastp/L16_N2_OP503.json
+# Glucose 
+~% fastp -w 4 -i /file/location/fastq/SRR3733895.fastq -o /file/location/fastp/L16_Glucose1.fastq -h /file/location/fastp/L16_N2_Glucose1.html -j /file/location/fastp/L16_N2_OP503.json
+~% fastp -w 4 -i /file/location/fastq/SRR3733896.fastq -o /file/location/fastp/L16_Glucose2.fastq -h /file/location/fastp/L16_N2_Glucose2.html -j /file/location/fastp/L16_N2_OP503.json
+~% fastp -w 4 -i /file/location/fastq/SRR3733897.fastq -o /file/location/fastp/L16_Glucose3.fastq -h /file/location/fastp/L16_N2_Glucose3.html -j /file/location/fastp/L16_N2_OP503.json
+
+############# additional code
+multiqc .
+```
+
+<font size="4">
+
+2.	Quality control analysis is performed on both pre- and post- adapter trimmed FASTQ files to check for adapter contamination. FASTP performs the adapter trimming step and generates new FASTQ files that are used for the final analysis.
+
+</font>
+
+#### 3.4.5	Alignment / Mapping
+
+<font size="4">
+
+**1.**	Using Google Chrome, download the *Caenorhabditis elegans* genome assembly FASTA file (**GCF_000002985.6_WBcel235_genomic.fna** file extension) from the RefSeq NCBI website [https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000002985.6/] (*see* **Note 34 & Updated Note 3**).
+
+**2.**	Using Google Chrome, download the *Caenorhabditis elegans* genome annotation file (**genomic.gtf** file extension) from the RefSeq NCBI website [https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000002985.6/] (*see* **Note 34 & Updated Note 3**).
+
+**3.**	Create a “Bioinformatic analysis” folder for the experimental dataset being analyzed. Within, create a folder named “STAR_RefSeq_index.” Transfer the FASTA and annotation files from RefSeq NCBI into the “STAR_RefSeq_index” folder. 
+
+4.	Generate a genome index for *C. elegans* using the STAR genomeGenerate command and follow the package documentation directions at [https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf]. For the small genome of *C. elegans*, set the –genomeSAindexNbases to 12. To reduce RAM consumption, set the –genomeChrBinNbits to 12 (*see* **Note 35**). 
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# STAR GenomeGenerate - Indexing C. elegans Genome - Genome WS294
+Sample Linux Code: 
+~% STAR --runMode genomeGenerate --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --genomeFastaFiles /file/location/STAR_RefSeq_index/GCF_000002985.6_WBcel235_genomic.fna --genomeSAindexNbases 12 --genomeChrBinNbits 12 --outFileNamePrefix /folder/location/STAR_RefSeq_index/STAR_RefSeq_index --sjdbGTFfile /file/location/STAR_RefSeq_index/genomic.gtf --sjdbOverhang 100 
+
+```
+
+<font size="4">
+
+**5.**	For each sample, run a STAR alignment using the default settings and follow the package documentation directions at [https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf]. Additional commands to include are the export of unmapped reads files, GeneCounts option (ReadsPerGene.out.tab files), BAM coordinated/uncoordinated files and the adjustments described in **step 4** (*see* **Note 34-37**).
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# STAR Alignment Code
+Sample Linux Code: 
+~% STAR --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --readFilesIn /file/location/fastp/sample1_trial1_R1.fastq /file/location/fastp/sample1_trial1_R2.fastq --quantMode TranscriptomeSAM GeneCounts --outSAMtype BAM Unsorted SortedByCoordinate --outFileNamePrefix /file/location/star_rawcounts/sample1_trial1 
+
+############# additional code
+# OP50 Control
+STAR --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --readFilesIn /file/location/fastp/L16_OP501.fastq --quantMode TranscriptomeSAM GeneCounts --outSAMtype BAM Unsorted SortedByCoordinate --outFileNamePrefix /folder/location/L16_star/L16_OP501
+STAR --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --readFilesIn /file/location/fastp/L16_OP502.fastq --quantMode TranscriptomeSAM GeneCounts --outSAMtype BAM Unsorted SortedByCoordinate --outFileNamePrefix /folder/location/L16_star/L16_OP502
+STAR --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --readFilesIn /file/location/fastp/L16_OP503.fastq --quantMode TranscriptomeSAM GeneCounts --outSAMtype BAM Unsorted SortedByCoordinate --outFileNamePrefix /folder/location/L16_star/L16_OP503
+# Glucose 
+STAR --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --readFilesIn /file/location/fastp/L16_Glucose1.fastq --quantMode TranscriptomeSAM GeneCounts --outSAMtype BAM Unsorted SortedByCoordinate --outFileNamePrefix /folder/location/L16_star/L16_Glucose1
+STAR --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --readFilesIn /file/location/fastp/L16_Glucose2.fastq --quantMode TranscriptomeSAM GeneCounts --outSAMtype BAM Unsorted SortedByCoordinate --outFileNamePrefix /folder/location/L16_star/L16_Glucose2
+STAR --runThreadN 4 --genomeDir /folder/location/STAR_RefSeq_index --readFilesIn /file/location/fastp/L16_Glucose3.fastq --quantMode TranscriptomeSAM GeneCounts --outSAMtype BAM Unsorted SortedByCoordinate --outFileNamePrefix /folder/location/L16_star/L16_Glucose3
+
+```
+
+<font size="4">
+
+6.	Perform alignment on both pre- and post- trimmed data to examine adapter contamination. However, only use post-trimmed data for final analysis (*see* **Note 34-37**). 
+
+</font>
+
+#### 3.4.6	Validating Library Strandedness (IGV, SALMON and STAR genecount) (*see* **Note 38**)
+
+<font size="4">
+
+1.	To differentiate between a stranded and unstranded sample library, first install the Integrative Genomics Viewer (IGV) following the package documentation directions at [https://software.broadinstitute.org/software/igv/].
+
+**2.**	Index all the STAR exported BAM coordinated files using SAMTOOLS following package documentation directions for indexing BAM files at [http://www.htslib.org/doc/samtools.html] (*see* **Updated Note 5**. 
+
+</font>
+![L16 N2 Control Samples](L16_OP501.png)
+![L16 N2 Control Samples](L16_OP502.png)
+![L16 N2 Control Samples](L16_OP503.png)
+**Updated Code**
+```{bash eval=FALSE}
+############# additional code
+# Samtools index .bam coordinate files
+Sample Linux Code: 
+~% igvtools index ~/file/location/L16_star/L16_OP501Aligned.sortedByCoord.out.bam ~/file/location/L16_star/L16_OP501Aligned.sortedByCoord.out.bam.bai
+~% igvtools index ~/file/location/L16_star/L16_OP502Aligned.sortedByCoord.out.bam ~/file/location/L16_star/L16_OP502Aligned.sortedByCoord.out.bam.bai
+~% igvtools index ~/file/location/L16_star/L16_OP503Aligned.sortedByCoord.out.bam ~/file/location/L16_star/L16_OP503Aligned.sortedByCoord.out.bam.bai
+```
+
+<font size="4">
+
+**3.**	Load the indexed BAM coordinated files onto IGV, select the *C. elegans* **ce11** genome and determine the strandedness of the library by following the instructions at [https://darencard.net/blog/2019-09-13-determining-stranded-rnaseq/ ] (*see* **Note 39**). The number of counts associated with each gene can also be explored using the genome browser.
+
+**4.**	Next, to ensure that the library is properly analyzed, SALMON is used to detect the strand specificity of sequenced reads. Download the *C. elegans* genome FASTA file (**GCF_000002985.6_WBcel235_genomic.fna** file extension) again using the Google **Chrome RefSeq NCBI website files in [https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000002985.6/]** and place into a folder called “wormgenome_salmon”(*see* **Note 34 & Updated Note 3**).
+
+5.	Index the *C. elegans* genome FASTA file following the SALMON package documentation directions at [https://salmon.readthedocs.io/en/latest/] (*see* **Note 40**).
+
+</font>
+
+```{bash eval=FALSE}
+
+# SALMON Index C.elegans genome
+Sample Linux Code: 
+~% salmon index -t /file/location/salmon/wormgenome_salmon/c_elegans.PRJNA13758.WS285.genomic.fa -i /file/location/salmon/wormgenome_salmon
+
+```
+
+<font size="4">
+
+6.	Using one of the previously generated, post-trim sample FASTQ files, quantify gene counts in mapping-based mode following the SALMON package documentation directions at [https://salmon.readthedocs.io/en/latest/]. Determine the strandedness of the library by interpreting the acronym output of the library using the package documentation (*see* **Note 41**). 
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+############# additional code
+# SALMON run pseudoaligner 
+Sample Linux Code: 
+~% salmon quant -i /file/location/salmon/wormgenome_salmon -l A -1 /file/location/fastp/sample1_trial1_R1.fastq -2 /file/location/fastp/WT_trial1_R2.fastq --gcBias --validateMappings -o transcript_quant
+
+salmon quant -i /Users/robledoj13/Desktop/worm_genome_WS294/salmon_RefSeq_index -l A -r /Volumes/robledoj13.2/RNA/glucose/fastp/L16_OP501.fastq --validateMappings -o transcript_quant_OP501
+# Automatically detected most likely library type as U
+
+salmon quant -i /Users/robledoj13/Desktop/worm_genome_WS294/salmon_RefSeq_index -l A -r /Volumes/robledoj13.2/RNA/glucose/fastp/L16_OP502.fastq --validateMappings -o transcript_quant_OP502
+# Automatically detected most likely library type as U
+
+salmon quant -i /Users/robledoj13/Desktop/worm_genome_WS294/salmon_RefSeq_index -l A -r /Volumes/robledoj13.2/RNA/glucose/fastp/L16_OP503.fastq --validateMappings -o transcript_quant_OP503
+
+# Output
+Automatically detected most likely library type as U (Unstranded Data)
+```
+
+<font size="4">
+
+7.	To further validate the strandedness of the samples the STAR genecount option from **step 5** exports a text file (extension “ReadsPerGene.out.tab”) with four columns corresponding to strandedness possibilities: gene ID, counts for unstranded RNA-seq, counts for first read strand aligned with RNA, and counts for second read strand aligned with RNA. Use a grep/awk script command in the Linux terminal to determine the number of reads in each column for each sample in ReadsPerGene.out.tab text file. The count method here can be referenced in [https://biocorecrg.github.io/RNAseq_course_2019/alnpractical.html] and strandedness can be determined by the column with the most reads (*see* **Note 42** and **43**). 
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# Count the number of reads from STAR output files
+Sample Linux Code: 
+~% grep -v "N_" /file/location/star_rawcounts/Sample1_trial1ReadsPerGene.out.tab | awk '{unst+=$2;forw+=$3;rev+=$4}END{print unst,forw,rev}'
+
+############# additional code
+# Counts - 3 samples
+grep -v "N_" /file/location/L16_star/L16_OP501ReadsPerGene.out.tab | awk '{unst+=$2;forw+=$3;rev+=$4}END{print unst,forw,rev}'
+# 29982830 15078914 15219613
+# 29,982,830 unstranded RNAseq Reads were mapped to known genes. This suggest that the protocol for this mRNA-Seq experiment was unstranded
+
+grep -v "N_" /file/location/L16_star/L16_OP502ReadsPerGene.out.tab | awk '{unst+=$2;forw+=$3;rev+=$4}END{print unst,forw,rev}'
+# 27627602 13886120 14025593
+#27,627,602 unstranded RNAseq Reads were mapped to known genes. This suggest that the protocol for this mRNA-Seq experiment was unstranded
+
+grep -v "N_" /file/location/L16_star/L16_OP503ReadsPerGene.out.tab | awk '{unst+=$2;forw+=$3;rev+=$4}END{print unst,forw,rev}'
+# 30416273 15330917 15427581
+#30,416,273 unstranded RNAseq Reads were mapped to known genes. This suggest that the protocol for this mRNA-Seq experiment was unstranded
+
+```
+
+#### 3.4.7	STAR genecount processed files
+
+<font size="4">
+
+1.	Once library strandedness is determined, follow the STAR package documentation to extract the appropriate columns from the ReadsPerGene.out.tab text files for all samples exported in **step 5**. Column 1 reports the gene list and columns 2-4 report gene counts corresponding to library strandedness. Perform the processing of ReadsPerGene.out.tab text files for all samples using a cut command to extract column 1 and the appropriate second column onto a new text file; this file will be used for all further analysis (*see* **Note 43-44**). 
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# process STAR genecount txt files
+Sample Linux Code: 
+~% cut -f1,2 /file/location/star_rawcounts/Sample1_trial1ReadsPerGene.out.tab > Sample1_trial1_counts.txt
+
+# column 2 was extracted since we have unstranded data
+############# additional code
+
+cut -f1,2 L16_OP501ReadsPerGene.out.tab > L16_OP501ReadsPerGene.out.tab_counts.txt
+cut -f1,2 L16_OP502ReadsPerGene.out.tab > L16_OP502ReadsPerGene.out.tab_counts.txt
+cut -f1,2 L16_OP503ReadsPerGene.out.tab > L16_OP503ReadsPerGene.out.tab_counts.txt
+cut -f1,2 L16_Glucose1ReadsPerGene.out.tab > L16_Glucose1ReadsPerGene.out.tab_counts.txt
+cut -f1,2 L16_Glucose2ReadsPerGene.out.tab > L16_Glucose2ReadsPerGene.out.tab_counts.txt
+cut -f1,2 L16_Glucose3ReadsPerGene.out.tab > L16_Glucose3ReadsPerGene.out.tab_counts.txt
+
+```
+
+## 3.5	 Bioinformatic Pipeline - R and R-studio
+
+### Part II: R and R-studio
+
+<font size="4">
+
+**Part 2** of the Bioinformatic pipeline utilizes R and R-studio on a MacOS/Linux platform. Multiple free R packages are available to analyze RNA-sequencing data. The R language can perform statistical analysis and graphing analysis (*see* **Note 22**). 
+
+1.	Create a folder where all R/R-studio analysis will be performed for the project. 
+
+2.	Inside the R project folder, create a folder labeled “star_rawcounts” and transfer all the processed STAR files from Subheading **3.4.7** (*see* **Note 44**).
+
+3.	Create a “sample_description.txt” file with a description of the samples, genotypes, sample names, file names (e.g. from STAR raw counts file folder), trial numbers, etc. (*see* **Note 45**).
+
+**4.**	Using a previously downloaded *Caenorhabditis elegans* genome annotation file (**GCF_000002985.6_WBcel235_genomic.fna** file extension) from the RefSeq NCBI website [https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000002985.6/] (*see* **Note 34 & Updated Note 3**) create a “wormgenes.txt” file that includes all *C. elegans* genes with associated RefSeqIDs. Extracting wormgenes and WormbaseIDs using the *C. elegans* annotation file from RefSeq can be done by using a cat and awk command in the Linux Terminal application (*see* **Note 46**). Alternatively, can use the geneInfo.tab from *C. elegans* genome index generated by STAR Subheading **3.4.5 step 4** (*see* **Updated note 3 & 6**).
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# process wormgenes.txt file from STAR Genome Index Files
+Sample Linux Code: 
+~% { grep "CELE_" geneInfo.tab ; grep "KEF34_" geneInfo.tab; } > wormgenes.refseq.294.txt
+
+```
+
+<font size="4">
+
+5.	Download a “functional_description.txt” file from the Wormbase website [https://downloads.wormbase.org/releases/current-production-release/] with file name “c_elegans.PRJNA13758.WS294.functional_descriptions.txt.gz”. 
+
+6.	The functional_description.txt file will be used to extract the following descriptions: WBgenes, gene class description, concise description, and automated description. Use multiple awk commands to create 4 functional gene description text files using WBgenes and a different Wormbase gene description column (i.e. class description, concise description, or automated description) (*see* **Note 47**).
+
+</font>
+**Updated Code**
+```{bash eval=FALSE}
+
+# process functional descriptions txt file
+Sample Linux Code:
+gene list: 
+~% grep "WBGene" c_elegans.PRJNA13758.WS294.functional_descriptions.txt > WB294_WBgenes1.txt 
+gene class description: 
+~% awk '/Gene class description:/' c_elegans.PRJNA13758.WS294.functional_descriptions.txt > WB294_geneclass.txt
+concise description: 
+~% awk ' /Concise description:/ { flag=1; pfx="" } /Automated description/ { flag=0; print "" } flag { printf "%s%s",pfx,$0; pfx=" " } ‘ c_elegans.PRJNA13758.WS294.functional_descriptions.txt > WB294_concise.txt
+
+automated description:
+~% awk ' /Automated description:/ { flag=1; pfx="" } /Gene class description:/ { flag=0; print "" } flag { printf "%s%s",pfx,$0; pfx=" " } ' c_elegans.PRJNA13758.WS294.functional_descriptions.txt > WB294_automated.txt
+
+```
+
+<font size="4">
+
+7.	Download and install R using the website directions at [https://cran.r-project.org/]. Download and Install R-studio Desktop using the website directions at [https://posit.co/download/rstudio-desktop/]. Open R-studio Desktop, create a new project and assign the folder created in **step 1** as the directory. All further analysis to identify DEGs use R-studio Desktop or R. 
+
+8.	Install all the following library packages required to identify Differentially Expressed Genes (DEGs) by following package documentation directions (*see* **Note 48**):
+
+- a.	Devtools - https://www.r-project.org/nosvn/pandoc/devtools.html 
+- b.	DESeq2 - https://bioconductor.org/packages/release/bioc/html/DESeq2.html 
+- c.	Ashr - https://github.com/stephens999/ashr 
+- d.	Dplyr - https://cran.r-project.org/web/packages/dplyr/dplyr.pdf 
+- e.	Writexl - https://cran.r-project.org/web/packages/writexl/index.html 
+- f.	Ggplot2 - https://ggplot2.tidyverse.org/index.html 
+- g.	Ggrepel - https://cran.r-project.org/web/packages/ggrepel/index.html 
+- h.	Pheatmap - https://www.r-bloggers.com/2022/10/the-pheatmap-function-in-r/ 
+- i.	PcaExplorer - https://bioconductor.org/packages/release/bioc/html/pcaExplorer.html 
+
+9.	Load all library packages required for the desired analysis to identify DEGs. 
+
+</font>
+
+```{r eval=FALSE}
+
+# load package libraries
+Sample R Code: 
+> library(devtools) #install.packages(“devtools”)
+> library(DESeq2) #BiocManager::install(“DESeq2”)
+> library(ashr) #install_github(“stephens999/ashr”)
+> library(dplyr) #install.packages(“dplyr”)
+> library(writexl) #install.packages(“writexl”)
+> library(ggplot2) #install.packages(“ggplot2”)
+> library(tidyverse) #install.packages(“tidyverse”)
+> library(ggrepel) #install.packages(“ggrepel”)
+> library(pheatmap) #install.packages(“pheatmap”)
+> library(pcaExplorer) #BiocManager::install(“pcaExplorer”)
+
+```
+
+<font size="4">
+
+10.	Import the sample_description.txt file using the read.table function in R-studio (*see* **Note 49**). 
+
+</font>
+
+```{r eval=FALSE}
+
+# import sample_description txt file
+Sample R Code: 
+> sample_description <- read.table("sample_description.txt", header=T, sep="\t")
+
+# sample_description
+# SampleName                                    FileName                  Diet_ref    Diet         Reference Trial Development
+# 1 L16_Control_1    L16_OP501ReadsPerGene.out.tab_counts.txt Control_Ladage_et_al_2016 Control Ladage_et_al_2016     1   D1_Adults
+# 2 L16_Control_2    L16_OP502ReadsPerGene.out.tab_counts.txt Control_Ladage_et_al_2016 Control Ladage_et_al_2016     2   D1_Adults
+# 3 L16_Control_3    L16_OP503ReadsPerGene.out.tab_counts.txt Control_Ladage_et_al_2016 Control Ladage_et_al_2016     3   D1_Adults
+# 4 L16_Glucose_1 L16_Glucose1ReadsPerGene.out.tab_counts.txt Glucose_Ladage_et_al_2016 Glucose Ladage_et_al_2016     1   D1_Adults
+# 5 L16_Glucose_2 L16_Glucose2ReadsPerGene.out.tab_counts.txt Glucose_Ladage_et_al_2016 Glucose Ladage_et_al_2016     2   D1_Adults
+# 6 L16_Glucose_3 L16_Glucose3ReadsPerGene.out.tab_counts.txt Glucose_Ladage_et_al_2016 Glucose Ladage_et_al_2016     3   D1_Adults
+```
+
+<font size="4">
+
+11.	Import the wormgenes.txt file using the read.table function in R-studio (*see* **Note 49**). 
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# import wormgenes txt file
+Sample R Code: 
+> wormgenes <- read.table("wormgenes.refseq.294.txt", header=FALSE, sep="\t")
+
+```
+
+<font size="4">
+
+12.	Import Wormbase functional gene description text files from **step 6** using read.table function in R-studio (*see* **Note 49**).
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# import WormBase functional description files
+Sample R Code: 
+> worm1 <- read.table("WB294_WBgenes1.txt", header=F, sep="\t", rownames(F))
+> worm2 <- read.table("WB294_geneclass.txt", header=F, sep="\t", rownames('Gene class description:'))
+> worm3 <- read.table("WB294_concise.txt", header=F, sep="\n", rownames('Concise description'))
+> worm4 <- read.table("WB294_automated.txt", header=F, sep="\t", rownames('Automated description:'))
+
+```
+
+<font size="4">
+
+13.	Combine all Wormbase functional gene descriptions onto a new dataframe using the cbind function (4 columns total). Delete the extra column names found on each gene description so that only the gene description text for each column remains (*see* **Note 50-51**). 
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# combine functional description files - further edit for merging later - remove extra characters
+Sample R Code: 
+> wormgene_desc <- cbind(worm1,worm2,worm3,worm4)
+> colnames(wormgene_desc)
+> colnames(wormgene_desc) <- c("WormBaseID", "GeneName", "Transcript_Name", "Gene_class_description", "Concise_description", "Automated_description")
+> wormgene_desc$Gene_class_description <- gsub("Gene class description: ","",wormgene_desc$Gene_class_description)
+> wormgene_desc$Concise_description <- gsub("Concise description: ","",wormgene_desc$Concise_description)
+> wormgene_desc$Automated_description <- gsub("Automated description: ","",wormgene_desc$Automated_description)
+
+```
+
+<font size="4">
+
+14.	Export this data as an Excel file using the write_xlsx function. This is the final Wormbase functional gene description file (*see* **Note 52**). 
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# export dataframe as excel file
+Sample R Code: 
+> write_xlsx(wormgene_desc, "wormbase.WS294_genedescriptions.xlsx")
+
+```
+
+<font size="4">
+
+**14.1** Combine RefSeq data with WormBase data. First will need to edit columns so that both sheets match without losing the origininal text (*see* **Updated Note 7**). 
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+############# Parse Wormbase.org gene file in R
+
+# edit WormBase.org transcriptIDs for merge two files by using matching transcript names
+
+# Wormbase.org and RefSeq have different number of genes
+> nrow(worm1)
+# WormBase functional descriptions files contain 52,109 genes
+> nrow(wormgenes) 
+# RefSeq geneome assembly contain 46,928 genes
+# Wormbase - RefSeq genes: 52,109 - 46,928 = 5,181 different genes
+
+############# 1. Make a new column name on both RefSeq & WormBase #############
+# edit wormbase worm1 column names & RefSeq wormgenes column names
+> colnames(worm1) <- c("WormBaseID", "GeneName", "WormBase_Transcript")
+
+> wormgenes <- wormgenes[, -3] # remove unnecessary column 3
+> wormgenes$V2 <- gsub("CELE_","",wormgenes$V2) #delete extra characters in each row - this leaves transcript name
+> colnames(wormgenes) <- c("RefSeq_genename", "RefSeq_Transcript") # edit column names
+
+# create a merged transcript column to combine WormBase & RefSeq
+> worm1$merge_transcript = worm1$WormBase_Transcript
+> wormgenes$merge_transcript = wormgenes$RefSeq_Transcript
+
+
+############# 3. Merge RefSeq & WormBase files #############
+> refseqWB294_genes <- merge(worm1, wormgenes, by = "merge_transcript", all = F)
+> nrow(wormgenes) # only 41,200 genes were merged from 2 databases - 46,928 aligned genes is our goal to match
+
+
+############# 4. Determine which genes were not merged & edit merge_transcript columns #############
+> missing_genes <- anti_join(worm1, wormgenes, by = "merge_transcript") # anti_join will do the opposite of merge and provide you with a dataframe including all the genes that did not merge
+> nrow(missing_genes) # 10,909 genes not merging
+# 4,094 Wormbase genes have "NOT KNOWN" transcript IDs - we are not interested in these genes
+> sum(worm1$WormBase_Transcript == 'not known') # 4,094 WormBase_TranscriptIDs are not known
+
+# the rest of the genes have differing transcript names - isoforms for example worm1 = T13A10.10a & wormgenes = T13A10.10
+# remove extra a isoform character on each transcript in worm1 file
+> worm1$merge_transcript <- gsub("a","",worm1$merge_transcript)
+> worm1$merge_transcript <- gsub("b","",worm1$merge_transcript)
+> worm1$merge_transcript <- gsub("c","",worm1$merge_transcript)
+> worm1$merge_transcript <- gsub("d","",worm1$merge_transcript)
+# just one transcript has isoform e - manually be done
+
+# to ensure proper merging - capitalize merge_transcript columns on both files
+> worm1$merge_transcript <- toupper(worm1$merge_transcript) # upper-case conversion to ensure combining files
+> wormgenes$merge_transcript <- toupper(wormgenes$merge_transcript) # upper-case conversion to ensure combining files
+
+# merge files again
+> refseqWB294_genes <- merge(worm1, wormgenes, by = "merge_transcript", all = F)
+> nrow(refseqWB294_genes) # 46867 genes successfully merged and now we have 61 missing genes 
+
+# identify missing genes that refseq is not merging with wormbase
+> missing_genes <- anti_join(wormgenes, worm1, by = "merge_transcript") # anti_join will do the opposite of merge and provide you with a dataframe including all the genes that did not merge
+> nrow(missing_genes) # 61 genes 
+
+> View(missing_genes) # view file and search for each of these genes in worm1 and wormgenes variables
+
+# fixing 61 gene annotations from refseq to match with wormbase genes - wormgenes edit file
+# 15 TEL54X.2 genes are annotated in refseq with cTEL54X.2 - (61 - 15 = 46)
+# 4 genes have isoform issues - F59E12.6_1 F59E12.6_3 F59E12.6_4 K09C6.2 (46 - 4 = 42)
+# 6 genes have gene names instead of transcript IDs (42 - 6 = 36)
+# 36 genes are transposons, mitochondria genes - KEF34_t01 or KEF34_p12 - (36 - 36 = 0): I will analyze these list separately
+
+############# 4. Edit merge_transcript columns #############
+
+
+# edit 15 TEL54X.2 gene transcriptIDs in each file
+# WormBase genes
+> letter_C <- c("TEL55X.1","TEL7X.1","TEL54X.1","TEL17.1","TEL7X.2","TEL3X.2","TEL3X.3","TEL29B.1","TEL17.2","TEL79B.1","TEL52S.1","TEL7X.3","TEL29B.2","TEL79B.2","TEL54X.2")
+> letter_C_replace <- c("cTel55X.1","cTel7X.1","cTel54X.1","cTel17.1","cTel7X.2","cTel3X.2","cTel3X.3","cTel29B.1","cTel17.2","cTel79B.1","cTel52S.1","cTel7X.3","cTel29B.2","cTel79B.2","cTel54X.2")
+> worm1$merge_transcript <- replace(worm1$merge_transcript, worm1$merge_transcript %in% letter_C, letter_C_replace)
+
+# RefSeq genes
+> letter_C2 <- c("CTEL29B.1", "CTEL29B.2", "CTEL52S.1", "CTEL54X.1", "CTEL54X.2", "CTEL79B.1", "CTEL79B.2", "CTEL3X.3", "CTEL3X.2","CTEL17.2", "CTEL17.1", "CTEL7X.3", "CTEL7X.2", "CTEL7X.1", "CTEL55X.1")
+> letter_C2_replace <- c("cTel29B.1", "cTel29B.2", "cTel52S.1", "cTel54X.1", "cTel54X.2", "cTel79B.1", "cTel79B.2", "cTel3X.3", "cTel3X.2","cTel17.2", "cTel17.1", "cTel7X.3", "cTel7X.2", "cTel7X.1", "cTel55X.1")
+> wormgenes$merge_transcript <- replace(wormgenes$merge_transcript, wormgenes$merge_transcript %in% letter_C2, letter_C2_replace)
+
+
+# edit 4 isoform issues
+> isoforms1 <- c("K09C6.2E")
+> isoforms1_replace <- c("K09C6.2")
+> worm1$merge_transcript <- replace(worm1$merge_transcript, worm1$merge_transcript %in% isoforms1, isoforms1_replace)
+
+# isoforms 2 - 3 replicates that correspond to the same WormBaseID
+> isoforms2 <- c("F59E12.6_1", "F59E12.6_3", "F59E12.6_4")
+> isoforms2_replace <- c("F59E12.6", "F59E12.6", "F59E12.6")
+> wormgenes$merge_transcript <- replace(wormgenes$merge_transcript, wormgenes$merge_transcript %in% isoforms2, isoforms2_replace)
+
+
+# several gene names instead of gene transcripts - 6 genes
+> gene_names <- c("LEV-10", "EAT-18", "CHA-1", "UNC-17", "EXOS-4.1", "TIN-9.2")
+> gene_names_replace <- c("lev-10", "eat-18", "cha-1", "unc-17", "exos-4.1", "tin-9.2")
+> wormgenes$merge_transcript <- replace(wormgenes$merge_transcript, wormgenes$merge_transcript %in% gene_names, gene_names_replace)
+
+# change 6 genes manually in worm1 file
+> worm1$merge_transcript <- replace(worm1$merge_transcript, 2912, "lev-10")
+> worm1$merge_transcript <- replace(worm1$merge_transcript, 1082, "eat-18")
+> worm1$merge_transcript <- replace(worm1$merge_transcript, 6683, "unc-17")
+> worm1$merge_transcript <- replace(worm1$merge_transcript, 421, "cha-1")
+> worm1$merge_transcript <- replace(worm1$merge_transcript, 7128, "exos-4.1")
+> worm1$merge_transcript <- replace(worm1$merge_transcript, 24482, "tin-9.2")
+
+############# 5. Merge merge_transcript columns #############
+
+# final merge
+> refseqWB294_genes <- merge(worm1, wormgenes, by = "merge_transcript", all = F)
+> nrow(refseqWB294_genes) # 46,892 and only 36 genes are missing
+
+# mitochondrial genome - KEF34 genes
+> refseq294_mitogenome <- anti_join(wormgenes, refseqWB294_genes, by = "merge_transcript")
+
+
+############# 6. Save an excel sheet of all aligned genes #############
+
+# create xlsx files
+> write_xlsx(refseqWB294_genes, "refseqWB294_genes.xlsx")
+> write_xlsx(refseq294_mitogenome, "refseq294_mitogenome.xlsx")
+
+
+############# 7. Create an all_worm_genes which include all transcript annotations #############
+
+# merge final annotation file
+> all_worm_genes <- merge(refseqWB294_genes, wormgene_desc, by = "WormBaseID", all = F)
+
+# edit all_worm_genes column names
+> colnames(all_worm_genes)
+# [1] "WormBaseID"             "merge_transcript"       "GeneName.x"             "WormBase_Transcript"    "RefSeq_genename"        "RefSeq_Transcript"      "GeneName.y"            
+# [8] "Transcript_Name"        "Gene_class_description" "Concise_description"    "Automated_description"
+
+# remove unnecessary columns
+> all_worm_genes <- all_worm_genes[,c(-2,-4,-7,-8)]
+> colnames(all_worm_genes)
+# [1] "WormBaseID"             "GeneName.x"             "RefSeq_genename"        "RefSeq_Transcript"      "Gene_class_description" "Concise_description"    "Automated_description"
+
+
+# edit column names
+> colnames(all_worm_genes) <- c("WormBaseID", "Gene_Symbol", "RefSeq_ID", "Transcript", "Gene_class_description", "Concise_description", "Automated_description")
+# reorder columns
+> all_worm_genes <- all_worm_genes[c("RefSeq_ID","WormBaseID","Transcript","Gene_Symbol","Gene_class_description","Concise_description","Automated_description")]
+# convert to data frame & export file as excel sheet
+> all_worm_genes <- as.data.frame(all_worm_genes)
+> write_xlsx(all_worm_genes, "allwormgenes_refseqWB294.xlsx")
+
+```
+
+<font size="4">
+
+15.	Construct a DESeq2 Data Set Object using the DESeqDataSetFromHTSeqCount function. Load in the sample_description data frame, directory for processed STAR files (Subheading 3.5**step 2**), and design of the experiment using a column(s) in the sample_description data frame (*see* **Note 53-54** & **Updated Note 8**). 
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# contruct DESeq2 Data Set Object using GeneCount files
+Sample R Code: 
+> experiment1 <- DESeqDataSetFromHTSeqCount(sampleTable = sample_description, directory = "star_rawcounts", design = ~ Diet)
+
+```
+
+<font size="4">
+
+16.	Filter the resulting data by removing genes with less than 10 summed raw counts [**9**] (*see* **Note 55**). 
+
+</font>
+**Did not perform in this tutorial**
+```{r eval=FALSE}
+
+# Optional: remove lowly expressed genes - 10 counts or less across experiments - did not perform in this tutorial
+Sample R Code:
+> experiment1 <- experiment1[rowSums(counts(experiment1)) > 10, ]
+
+```
+
+<font size="4">
+
+17.	Fit statistical model of DESeq2 using the DESeq function (*see* **Note 56**). 
+
+</font>
+
+```{r eval=FALSE}
+
+# fit DESeq2 statistical model
+Sample R Code: 
+> stat1 <- DESeq(experiment1)
+
+```
+
+<font size="4">
+
+18.	Create a norm_counts data frame for normalized counts using the log2(counts) function of the statistical model variable. Add WormbaseIDs and gene names to the norm_counts data frame using the merge(unique) function (*see* **Note 57-58**).
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# normalized counts for experiment
+Sample R Code: 
+> norm_counts <- log2(counts(stat1, normalized = TRUE)+1) 
+> norm_counts_genes <- merge(unique(all_worm_genes[,1:7]), data.frame(ID=rownames(norm_counts), norm_counts), by=1, all=F)
+
+```
+
+<font size="4">
+
+19.	Using the norm_counts data frame, create a new data frame(s) for each sample to include the following columns: WormBaseIDs, gene name, sample 1 normalized counts for each trial replicate using base R functions (*see* **Note 59-60**). Use the rowMeans function to add a column of average normalized counts to each sample data frame (*see* **Note 61**). 
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+> control <- norm_counts_genes[,c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)] #N2_OP50
+> glucose <- norm_counts_genes[,c(1, 2, 3, 4, 5, 6, 7, 11, 12, 13)] #N2_Glucose
+
+> control$control_avg_ncounts <- rowMeans(control[,8:10]) #OP50
+> glucose$glucose_avg_ncounts <- rowMeans(glucose[,8:10]) #Glucose
+
+> control_avg_ncounts <- control[,c(1,2,4,5,6,7,11)] #control_OP50
+> glucose_avg_ncounts <- glucose[,c(1,2,4,5,6,7,11)] #control_Glucose
+
+> avg_norm_counts <- merge(control_avg_ncounts, glucose_avg_ncounts)
+
+```
+
+<font size="4">
+
+20.	Export the average normalized counts as a text file using the write.table function and as an Excel table using the write_xlsx function (*see* **Note 62**). 
+
+</font>
+
+```{r eval=FALSE}
+
+# export average normalized counts
+Sample R Code: 
+> write.table(norm_counts_genes, "experiment1_normcounts.txt", quote=F, col.names=T, row.names=F, sep="\t")
+> write_xlsx(norm_counts_genes, "experiment1_normcounts.xlsx")
+> write.table(avg_norm_counts, "experiment1_avg_normcounts.txt", quote=F, col.names=T, row.names=F, sep="\t")  
+> write_xlsx(avg_norm_counts, "experiment1_avg_normcounts.xlsx")
+
+```
+
+#### 3.5.1	Visualization – Principal Component Analysis and Sample Distance Heatmap
+
+<font size="4">
+
+1.	To visualize the variability between samples, perform a variance stabilizing transformation (vst function) using the statistical model of DESeq2. Calculate between sample distances matrix using the vst transformed variable and create a heatmap (*see* **Note 63-64**). 
+
+</font>
+
+![L16 Sample distance heatmap](sample_distance_heatmap.png)
+```{r eval=FALSE}
+
+# vst transform data and sample distance heatmap
+Sample R Code: 
+> vsd <- vst(stat1)
+> sampleDistMatrix <- as.matrix(dist(t(assay(vsd))))
+> png("sample_distance_heatmap.png")
+> pheatmap(sampleDistMatrix)
+
+```
+
+<font size="4">
+
+2.	Create a Principal Component Analysis (PCA) plot (plotPCA function) using the transformed variable and a sample column description from the sample_description data frame (Subheading **3.5**, **step 3**) (*see* **Note 65-67**). 
+
+</font>
+![L16 PCA Plot](PCA1.png)
+```{r eval=FALSE}
+
+# vst transform data and plot PCA
+Sample R Code: 
+> png("PCA1.png")
+> plotPCA(object = vsd, intgroup = "Diet")
+
+```
+
+#### 3.5.2	Differentially Expressed Genes
+
+<font size="4">
+
+1.	To identify DEGs between 2 groups, use the results function and include the object statistical model of DESeq2, using a contrast argument to include the 2 comparison names (*see* **Note 68** and **69**). 
+
+</font>
+
+```{r eval=FALSE}
+
+# DEG results for each group comparison
+Sample R Code: 
+> deg1 <- results(object = stat1, contrast=c("Diet","Glucose","Control"))
+
+```
+
+<font size="4">
+
+2.	Use the lfcShrink function and include the object statistical model of DESeq2, and a contrast argument to include the 2 comparison names (*see* **Note 68-69**). 
+
+</font>
+**did not perform in this analysis - only if wanting to perform figures using log2FC**
+```{r eval=FALSE}
+
+# shrink Log2FC - optional
+Sample R Code: 
+> deg1_shrink <- lfcShrink(dds = stat1, contrast=c("Genotype_ortreatment","sample1_treatment2","sample1_treatment1"), type="ashr")
+
+```
+
+<font size="4">
+
+3.	Merge the wormgene description data frame (Subheading **3.5**, *step* **1-4**) with the lfcShrink variable using gene names as a common column in both data frames (*see* **Note 70**).
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# add gene IDs to DEG file
+Sample R Code: 
+> deg1_genes <- merge(unique(all_worm_genes[1:7]), data.frame(ID=row.names(deg1), deg1), by=1, all=T)
+
+```
+
+<font size="4">
+
+4.	Merge the average norm counts (Subheading **3.5**, *step* **19-20**) for the samples to the lfcShrink variable (*see* **Note 71**). Organize columns in the order desired (*see* **Note 72**).
+
+</font>
+**Updated Code**
+```{r eval=FALSE}
+
+# add average normalized counts for each sample comparison to DEG file and reorganize columns
+Sample R Code: 
+> deg1_genes <- merge(deg1_genes, avg_norm_counts)
+> colnames(deg1_genes)  
+> deg1_genes <- deg1_genes[c("WormBaseID", "RefSeq_ID","Transcript", "Gene_Symbol", "baseMean", "control_avg_ncounts", "glucose_avg_ncounts", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj", "Gene_class_description", "Concise_description", "Automated_description")]
+
+```
+
+<font size="4">
+
+5.	Export the DEGs of each comparison to a text file using the write.table function and as an Excel file using the write_xlsx function (*see* **Note 73**).
+
+</font>
+
+
+```{r eval=FALSE}
+
+# export txt and excel file of results
+Sample R Code: 
+> write.table(deg1_genes, "deseq2_glucose_vs_control.txt", quote=F, col.names=T, row.names=F, sep="\t")
+> write_xlsx(deg1_genes, "deseq2_glucose_vs_control.xlsx")
+
+```
+
+<font size="4">
+
+Repeat **steps 1-5** from Subheading **3.5.2** for each comparison made for all samples. Each file should include the following columns: WormBaseIDs, Gene Name, Sample1 Average Norm Counts, Sample2 Average Norm Counts, log2FoldChange, lfcSE, stat, pvalue, padj, gene class description, gene concise description, and gene automated description.
+
+</font>
+
+# R session
+```{r eval=FALSE}
+sessionInfo()
+# notes
+R version 4.4.2 (2024-10-31)
+Platform: x86_64-apple-darwin20
+Running under: macOS Sequoia 15.1.1
+
+Matrix products: default
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Chicago
+tzcode source: internal
+
+attached base packages:
+[1] stats4    stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] EnhancedVolcano_1.22.0      pheatmap_1.0.12             ggrepel_0.9.6               ggplot2_3.5.1               dplyr_1.1.4                 readxl_1.4.3               
+ [7] writexl_1.5.1               ashr_2.2-66                 DESeq2_1.44.0               SummarizedExperiment_1.34.0 Biobase_2.64.0              MatrixGenerics_1.16.0      
+[13] matrixStats_1.4.1           GenomicRanges_1.56.2        GenomeInfoDb_1.40.1         IRanges_2.38.1              S4Vectors_0.42.1            BiocGenerics_0.50.0        
+[19] devtools_2.4.5              usethis_3.1.0              
+
+loaded via a namespace (and not attached):
+ [1] tidyselect_1.2.1        farver_2.1.2            fastmap_1.2.0           promises_1.3.2          digest_0.6.37           mime_0.12               lifecycle_1.0.4        
+ [8] ellipsis_0.3.2          invgamma_1.1            magrittr_2.0.3          compiler_4.4.2          rlang_1.1.4             tools_4.4.2             utf8_1.2.4             
+[15] yaml_2.3.10             knitr_1.49              labeling_0.4.3          S4Arrays_1.4.1          htmlwidgets_1.6.4       pkgbuild_1.4.5          DelayedArray_0.30.1    
+[22] RColorBrewer_1.1-3      pkgload_1.4.0           abind_1.4-8             BiocParallel_1.38.0     miniUI_0.1.1.1          withr_3.0.2             purrr_1.0.2            
+[29] grid_4.4.2              fansi_1.0.6             urlchecker_1.0.1        profvis_0.4.0           xtable_1.8-4            colorspace_2.1-1        scales_1.3.0           
+[36] cli_3.6.3               rmarkdown_2.29          crayon_1.5.3            generics_0.1.3          remotes_2.5.0           rstudioapi_0.17.1       httr_1.4.7             
+[43] sessioninfo_1.2.2       cachem_1.1.0            zlibbioc_1.50.0         parallel_4.4.2          cellranger_1.1.0        XVector_0.44.0          vctrs_0.6.5            
+[50] Matrix_1.7-1            jsonlite_1.8.9          mixsqp_0.3-54           irlba_2.3.5.1           locfit_1.5-9.10         glue_1.8.0              codetools_0.2-20       
+[57] gtable_0.3.6            later_1.4.1             UCSC.utils_1.0.0        munsell_0.5.1           tibble_3.2.1            pillar_1.9.0            htmltools_0.5.8.1      
+[64] GenomeInfoDbData_1.2.12 truncnorm_1.0-9         R6_2.5.1                evaluate_1.0.1          shiny_1.9.1             lattice_0.22-6          memoise_2.0.1          
+[71] SQUAREM_2021.1          httpuv_1.6.15           Rcpp_1.0.13-1           SparseArray_1.4.8       xfun_0.49               fs_1.6.5                pkgconfig_2.0.3
+
+```
+
+
+
+# End
